@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'cocoapods-flutter/gem_version.rb'
+require 'cocoapods-flutter.rb'
 
 Gem::Specification.new do |spec|
   spec.name          = 'cocoapods-flutter'
-  spec.version       = CocoapodsFlutter::VERSION
+  spec.version       = Pod::Flutter::VERSION
   spec.authors       = ['mrdaios']
   spec.email         = ['mrdaios@gmail.com']
   spec.description   = %q{A short description of cocoapods-flutter.}

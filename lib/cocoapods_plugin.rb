@@ -1,1 +1,2 @@
-require 'cocoapods-flutter/command'
+require 'pod/command/flutter'
+require 'cocoapods-flutter/build'
