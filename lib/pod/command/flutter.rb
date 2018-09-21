@@ -11,19 +11,19 @@ module Pod
 
       def self.options
         [
-          ['--root', 'FLUTTER.'],
-          ['--application-path', 'FLUTTER.'],
-          ['--target', 'FLUTTER.'],
-          ['--build-mode', 'debug,release'],
-          ['--build-dir', 'FLUTTER.'],
-          ['--build-name', 'FLUTTER.'],
-          ['--build-number', 'FLUTTER.'],
-          ['--derived-dir', 'FLUTTER.'],
+          ['--root', 'Flutter SDK path default FLUTTER_ROOT.'],
+          ['--application-path', 'Flutter Project path defalut is Dir.pwd.'],
+          ['--target', 'Flutter target default is lib/main.dart.'],
+          ['--build-mode', 'Flutter build model, debug、release(default)'],
+          ['--build-dir', 'Flutter build dir, default build.'],
+          # ['--build-name', 'Flutter build name.'],
+          # ['--build-number', 'Flutter build number.'],
+          ['--derived-dir', 'Flutter derived dir, default Flutter'],
+          ['--application-frame-name', 'Flutter applicationFrame Name, default App'],
 
           ['--local-engine', 'TRACK_WIDGET_CREATION.'],
           ['--track-widget-creation-flag', 'LOCAL_ENGINE.'],
           ['--verbose', 'VERBOSE_SCRIPT_LOGGING.']
-
         ]
       end
 
@@ -37,6 +37,7 @@ module Pod
         @flutter_build_number = argv.option('build-number', '1')
         @flutter_derived_dir = argv.option('derived-dir', 'Flutter')
         @flutter_artifact_variant = nil
+        @flutter_application_frame_name = argv.option('application-frame-name', 'App')
 
         @flutter_local_engine = argv.option('local-engine', ENV['LOCAL_ENGINE'])
         @flutter_track_widget_creation_flag = argv.flag?('track-widget-creation-flag', ENV['TRACK_WIDGET_CREATION'])
@@ -47,8 +48,18 @@ module Pod
       def validate!
         super
         help! 'FLUTTER_ROOT is required.' unless @flutter_root
-        help! 'flutter target is required.' unless File.exist?(@flutter_target)
+        help! 'application-path is required.' unless File.exist?(@flutter_application_path)
+        help! 'target is required.' unless File.exist?(@flutter_target)
+        help! 'build-mode is required.' unless @flutter_build_mode
+      end
 
+      def run
+        copy_framework
+        build
+      end
+
+      def copy_framework
+        # 拷贝framework
         case @flutter_build_mode
         when 'release'
           @flutter_artifact_variant = 'ios-release'
@@ -59,27 +70,24 @@ module Pod
         end
         help! "Unknown FLUTTER_BUILD_MODE: #{@flutter_build_mode}" unless @flutter_artifact_variant
 
-        # help! 'application-path is required.' unless @flutter_application_path
-      end
-
-      def run
-        putConfig
-        # 拷贝framework
-        # todo: 通过pod依赖
         framework_path = File.join(@flutter_root, 'bin/cache/artifacts/engine/', @flutter_artifact_variant)
-        if File.exist?(File.join(@flutter_application_path, '.ios/'))
-          system "rm -rf -- #{@flutter_derived_dir}/engine"
-          system "mkdir #{@flutter_derived_dir}/engine"
-          system "cp -r -- #{framework_path}/Flutter.podspec #{@flutter_derived_dir}/engine"
-          system "cp -r -- #{framework_path}/Flutter.framework #{@flutter_derived_dir}/engine"
-          system "find \"#{@flutter_derived_dir}/engine/Flutter.framework\" -type f -exec chmod a-w \"{}\" \\;"
+        runnerPath = File.join(@flutter_application_path, '.ios/')
+        if File.exist?(runnerPath)
+          enginePath = File.join(runnerPath,'flutter/engine')
+          system "rm -rf -- #{enginePath}"
+          system "mkdir -p -- #{enginePath}"
+
+          system "cp -r -- #{framework_path}/Flutter.podspec #{enginePath}"
+          system "cp -r -- #{framework_path}/Flutter.framework #{enginePath}"
+          system "find \"#{enginePath}/Flutter.framework\" -type f -exec chmod a-w \"{}\" \\;"
         else
           system "rm -rf -- #{@flutter_derived_dir}/Flutter.framework"
+          system "mkdir -p -- #{@flutter_derived_dir}/Flutter.framework"
+
+          system "cp -r -- #{framework_path}/Flutter.podspec #{@flutter_derived_dir}"
           system "cp -r -- #{framework_path}/Flutter.framework #{@flutter_derived_dir}"
           system "find \"#{@flutter_derived_dir}/Flutter.framework\" -type f -exec chmod a-w \"{}\" \\;"
         end
-
-        build
       end
 
       def putConfig

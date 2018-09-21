@@ -21,17 +21,17 @@ module Pod
           "
           puts 'done'
 
-          system "cp -r -- \"#{@flutter_build_dir}/aot/App.framework\" \"#{@flutter_derived_dir}\""
+          system "cp -r -- \"#{@flutter_build_dir}/aot/#{@flutter_application_frame_name}.framework\" \"#{@flutter_derived_dir}\""
         else
           # Build stub for all requested architectures.
-          system "mkdir -p -- \"#{@flutter_derived_dir}/App.framework\""
+          system "mkdir -p -- \"#{@flutter_derived_dir}/#{@flutter_application_frame_name}.framework\""
 
           system "echo \"static const int Moo = 88;\" | xcrun clang -x c \
           -dynamiclib \
           -Xlinker -rpath -Xlinker '@executable_path/Frameworks' \
           -Xlinker -rpath -Xlinker '@loader_path/Frameworks' \
-          -install_name '@rpath/App.framework/App' \
-          -o \"#{@flutter_derived_dir}/App.framework/App\"
+          -install_name '@rpath/#{@flutter_application_frame_name}.framework/#{@flutter_application_frame_name}' \
+          -o \"#{@flutter_derived_dir}/#{@flutter_application_frame_name}.framework/#{@flutter_application_frame_name}\"
           "
           
         end
@@ -42,7 +42,9 @@ module Pod
           plistPath = File.join(@flutter_application_path, 'ios/Flutter/AppFrameworkInfo.plist')
         end
         if File.exist?(plistPath)
-            system "cp -- \"#{plistPath}\" \"#{@flutter_derived_dir}/App.framework/Info.plist\""
+            system "cp -- \"#{plistPath}\" \"#{@flutter_derived_dir}/#{@flutter_application_frame_name}.framework/Info.plist\""
+            #修改plist信息
+            system "/usr/libexec/PlistBuddy -c \"Set:CFBundleExecutable #{@flutter_application_frame_name}\" \"#{@flutter_derived_dir}/#{@flutter_application_frame_name}.framework/Info.plist\""
         end
 
         # build bundle
