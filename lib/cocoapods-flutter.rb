@@ -1,0 +1,5 @@
+module Pod
+    module Flutter
+        VERSION = "0.0.1".freeze
+    end
+end
